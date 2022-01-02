@@ -329,8 +329,8 @@ MonoBehaviour:
   footL: {fileID: 7548921931791488142}
   footR: {fileID: 961855852765738014}
   core: {fileID: 5591948472281952000}
-  moveSpeed: 0.25
-  stepDist: 2
+  moveSpeed: 0.1
+  stepDist: 0.5
   footOffset: 0.25
   nose: {fileID: 5709165183739902822}
   nosePush: 5
@@ -1405,8 +1405,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.5034716, y: 0.2408896, z: 1.8412038}
-  m_Center: {x: 0, y: 0.22079827, z: -0.15721864}
+  m_Size: {x: 0.5034716, y: 0.24088958, z: 1.6508589}
+  m_Center: {x: -1.2721041e-15, y: 0.2207994, z: -0.25239113}
 --- !u!1 &8515972594532276435
 GameObject:
   m_ObjectHideFlags: 0

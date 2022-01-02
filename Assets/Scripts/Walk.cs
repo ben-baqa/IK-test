@@ -19,8 +19,8 @@ public class Walk : MonoBehaviour
         Gizmos.color = Color.green;
         Gizmos.DrawSphere(footL.position, 0.1f);
         Gizmos.DrawSphere(footR.position, 0.1f);
-        Gizmos.DrawSphere(debug, 0.2f);
-        Gizmos.DrawSphere(debug2, 0.2f);
+        //Gizmos.DrawSphere(debug, 0.2f);
+        //Gizmos.DrawSphere(debug2, 0.2f);
     }
 
     // Start is called before the first frame update
@@ -50,13 +50,13 @@ public class Walk : MonoBehaviour
         Vector3 pos = core.position;
         pos += core.right * offsetMod * footOffset;
         // determine horizontal distance from foot to hip
-        Vector3 dist = pos - transform.position;
+        Vector3 dist = pos - foot.position;
         dist = Vector3.ProjectOnPlane(dist, Vector3.up);
 
         if (dist.magnitude > stepDist)
         {
             // locate point to step to
-            pos += dist.normalized * stepDist / 2;
+            pos += dist.normalized * stepDist * .99f;
             if (offsetMod > 0)
                 debug = pos;
             else
