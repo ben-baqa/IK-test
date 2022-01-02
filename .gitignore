@@ -1,9 +1,9 @@
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
-[Bb]uild/
-[Bb]uilds/
-Assets/AssetStoreTools*
+*[Ll]ibrary/
+*/[Tt]emp/
+*[Oo]bj/
+*/[Bb]uild/
+*/[Bb]uilds/
+*/Assets/AssetStoreTools*
 
 # Visual Studio cache directory
 .vs/
@@ -22,8 +22,6 @@ ExportedObj/
 *.booproj
 *.svd
 *.pdb
-*.opendb
-*.VC.db
 
 # Unity3D generated meta files
 *.pidb.meta
@@ -35,3 +33,22 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
+
+# misc
+.vscode/
+'~'
+
+# Specific problem starters
+Editor.meta
+ProjectVersion.txt
+MSBuildForUnity.Common.props
+
+# Odin
+Sirenix/Assemblies/AOT
+Sirenix/Assemblies/Editor/GeneratedOdinEditors.dll
+Sirenix/Assemblies/Editor/GeneratedOdinEditors.dll.meta
+Sirenix/Assemblies/Editor/GeneratedOdinEditors.mdb
+Sirenix/Assemblies/Editor/GeneratedOdinEditors.mdb.meta
+
+#Data
+Assets/_Project/Data/
