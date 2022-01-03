@@ -4,13 +4,29 @@ using UnityEngine;
 
 public class Walk : MonoBehaviour
 {
-    public Transform footL, footR, core;
-    public float moveSpeed, stepDist, footOffset;
+    [HideInInspector]
+    public Vector3 forward;
 
+    [Header("Movement")]
+    public float moveSpeed;
+    public float friction, turnLerp;
+
+    [Header("Steps")]
+    public Transform footL;
+    public Transform footR;
+    public float stepDist, footOffset;
+
+    [Header("Nose stuff")]
     public Rigidbody nose;
     public float nosePush;
 
+    private Rigidbody core;
     private ControlKey input;
+    private Vector3 stepTarget, lastStep, dir;
+    private Vector3 vPrev = Vector3.zero;
+
+    private bool rightStep;
+
 
     private Vector3 debug = Vector3.zero, debug2 = Vector3.zero;
 
@@ -27,6 +43,8 @@ public class Walk : MonoBehaviour
     void Start()
     {
         input = GetComponent<ControlKey>();
+        core = GetComponentInChildren<Rigidbody>();
+        lastStep = core.position;
     }
 
     // Update is called once per frame
@@ -48,15 +66,19 @@ public class Walk : MonoBehaviour
     {
         // locate hip position
         Vector3 pos = core.position;
-        pos += core.right * offsetMod * footOffset;
+        pos += core.transform.right * offsetMod * footOffset;
         // determine horizontal distance from foot to hip
         Vector3 dist = pos - foot.position;
         dist = Vector3.ProjectOnPlane(dist, Vector3.up);
 
+        // distance has been travelled, step is taken
         if (dist.magnitude > stepDist)
         {
+            // reset reference position
+            lastStep = core.position;
+
             // locate point to step to
-            pos += dist.normalized * stepDist * .99f;
+            pos += dir * stepDist * .99f;
             if (offsetMod > 0)
                 debug = pos;
             else
@@ -71,22 +93,79 @@ public class Walk : MonoBehaviour
         }
     }
 
+    private void Step()
+    {
+        // select which foot to place/check
+        Transform foot = rightStep ? footR : footL;
+
+        // set pos to "hip" position
+        Vector3 pos = core.position;
+        //pos += core.right * footOffset * (rightStep ? 1 : -1);
+
+        // determine planar distance from core to last step location
+        Vector3 dist = pos - lastStep;
+        dist = Vector3.ProjectOnPlane(dist, Vector3.up);
+
+        // distance has been travelled, step must be taken
+        if (dist.magnitude > stepDist)
+        {
+            // reset reference position
+            lastStep = core.position;
+
+            // locate point to step to
+                // apply hip offset
+            pos += core.transform.right * footOffset *
+                (rightStep ? 1 : -1);
+                // apply forward offset
+            pos += dir * stepDist * .999f;
+
+            RaycastHit hit;
+            if (Physics.Raycast(pos, Vector3.down, out hit, 1000))
+            {
+                (rightStep ? footR : footL).position = hit.point;
+                rightStep = !rightStep;
+            }
+        }
+    }
+
     void FixedUpdate()
     {
+        // Get input direction
         Vector3 dir = Vector3.zero;
+        Vector3 right = -Vector3.Cross(forward, Vector3.up);
         if (input["up"])
-            dir += Vector3.forward;
+            dir += forward;
         if (input["down"])
-            dir += Vector3.back;
+            dir -= forward;
         if (input["right"])
-            dir += Vector3.right;
+            dir += right;
         if (input["left"])
-            dir += Vector3.left;
+            dir -= right;
+        dir = dir.normalized;
+        // store input direction if it is meaningful
+        if (dir.magnitude > 0)
+            this.dir = dir;
 
-        core.position += (dir.normalized * moveSpeed);
-        nose.AddForce(-dir.normalized * moveSpeed * nosePush);
+        // move body * apply universal friction
+        core.AddForce(dir * moveSpeed);
+        core.velocity *= 1 - friction;
 
-        Step(footR);
-        Step(footL, -1);
+        // calculate acceleration and use it to offset nose
+        Vector3 diff = vPrev - core.velocity;
+        vPrev = core.velocity;
+        print(diff.magnitude);
+        nose.AddForce(-diff * nosePush);
+
+        // run step logic
+        Step();
+    }
+
+    public void Rotate(Vector3 forward, float rot)
+    {
+        this.forward = forward;
+        float r = core.rotation.eulerAngles.y;
+        r = Mathf.LerpAngle(r, rot,
+            turnLerp * core.velocity.magnitude);
+        core.rotation = Quaternion.Euler(Vector3.up * r);
     }
 }
