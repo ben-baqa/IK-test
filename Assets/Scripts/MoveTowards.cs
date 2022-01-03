@@ -15,7 +15,7 @@ public class MoveTowards : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        //Gizmos.DrawSphere(debug, .25f);
+        Gizmos.DrawSphere(debug, .25f);
     }
 
     // Start is called before the first frame update

@@ -14,16 +14,35 @@ public class Walk : MonoBehaviour
     [Header("Steps")]
     public Transform footL;
     public Transform footR;
-    public float stepDist, footOffset;
+    public float stepDist, footOffset,
+        stepTime, settleTime,
+        sideStepMod, stepHeightMod;
+
+    private Transform steppingFoot;
+    private Vector3 stepTarget, stepRef, stepAnchor;
+    private float stepProgress = 0, settleTimer;
+    private bool settled = false;
+
+    [Header("Turning steps")]
+    public float turnStepDegs;
+
+    private float rot, turnAnchor;
+
+    [Header("Juice")]
+    public Transform core;
+    public Transform head;
+
+    private Vector3 headPos;
 
     [Header("Nose stuff")]
     public Rigidbody nose;
     public float nosePush;
 
-    private Rigidbody core;
+    private Rigidbody rb;
     private ControlKey input;
-    private Vector3 stepTarget, lastStep, dir;
+    private Vector3 dir;
     private Vector3 vPrev = Vector3.zero;
+    private Vector2 inputDir = Vector2.zero;
 
     private bool rightStep;
 
@@ -43,54 +62,9 @@ public class Walk : MonoBehaviour
     void Start()
     {
         input = GetComponent<ControlKey>();
-        core = GetComponentInChildren<Rigidbody>();
-        lastStep = core.position;
-    }
-
-    // Update is called once per frame
-    private void Update()
-    {
-        //Vector3 dist, pos = core.position;
-        //dist = pos - footL.position;
-        //if (dist.magnitude > stepDist)
-        //    footL.Translate(dist.normalized * stepDist);
-        //dist = pos - footR.position;
-        //if (dist.magnitude > stepDist)
-        //    footR.Translate(dist.normalized * stepDist);
-
-        Debug.DrawRay(footL.position, Vector3.down);
-        Debug.DrawRay(footR.position, Vector3.down);
-    }
-
-    private void Step(Transform foot, float offsetMod = 1)
-    {
-        // locate hip position
-        Vector3 pos = core.position;
-        pos += core.transform.right * offsetMod * footOffset;
-        // determine horizontal distance from foot to hip
-        Vector3 dist = pos - foot.position;
-        dist = Vector3.ProjectOnPlane(dist, Vector3.up);
-
-        // distance has been travelled, step is taken
-        if (dist.magnitude > stepDist)
-        {
-            // reset reference position
-            lastStep = core.position;
-
-            // locate point to step to
-            pos += dir * stepDist * .99f;
-            if (offsetMod > 0)
-                debug = pos;
-            else
-                debug2 = pos;
-
-            RaycastHit hit;
-            if (Physics.Raycast(pos,
-                Vector3.down, out hit, 1000)) {
-                foot.position = hit.point;
-                print("Step Taken");
-            }
-        }
+        rb = GetComponentInChildren<Rigidbody>();
+        stepAnchor = rb.position;
+        headPos = head.localPosition;
     }
 
     private void Step()
@@ -99,22 +73,24 @@ public class Walk : MonoBehaviour
         Transform foot = rightStep ? footR : footL;
 
         // set pos to "hip" position
-        Vector3 pos = core.position;
+        Vector3 pos = rb.position;
+        pos += rb.transform.forward / 4;
         //pos += core.right * footOffset * (rightStep ? 1 : -1);
 
         // determine planar distance from core to last step location
-        Vector3 dist = pos - lastStep;
+        Vector3 dist = pos - stepAnchor;
         dist = Vector3.ProjectOnPlane(dist, Vector3.up);
 
         // distance has been travelled, step must be taken
-        if (dist.magnitude > stepDist)
+        if (dist.magnitude > stepDist ||
+            (settled && dist.magnitude > stepDist / 8))
         {
             // reset reference position
-            lastStep = core.position;
+            stepAnchor = pos;
 
             // locate point to step to
                 // apply hip offset
-            pos += core.transform.right * footOffset *
+            pos += rb.transform.right * footOffset *
                 (rightStep ? 1 : -1);
                 // apply forward offset
             pos += dir * stepDist * .999f;
@@ -122,10 +98,78 @@ public class Walk : MonoBehaviour
             RaycastHit hit;
             if (Physics.Raycast(pos, Vector3.down, out hit, 1000))
             {
-                (rightStep ? footR : footL).position = hit.point;
+                steppingFoot = rightStep ? footR : footL;
+                stepRef = steppingFoot.position;
+                stepTarget = hit.point;
+                stepProgress = settleTimer = 0;
+                turnAnchor = rot;
+                settled = false;
                 rightStep = !rightStep;
             }
         }
+
+        settleTimer += Time.deltaTime;
+        // standing still, move feet to rest position
+        if (!settled && stepProgress == 1 && settleTimer > settleTime)
+        {
+            // reset reference position
+            stepAnchor = pos;
+
+            // locate point to step to
+            // apply hip offset
+            pos += rb.transform.right * footOffset *
+                (rightStep ? 1 : -1);
+            // remove forward offset
+            pos -= rb.transform.forward / 4;
+
+            RaycastHit hit;
+            if (Physics.Raycast(pos, Vector3.down, out hit, 1000))
+            {
+                steppingFoot = rightStep ? footR : footL;
+                stepRef = steppingFoot.position;
+                stepTarget = hit.point;
+                stepProgress = 0;
+                rightStep = !rightStep;
+                if (settleTimer >= settleTime + stepTime)
+                    settled = true;
+            }
+        }
+        //if (settled && dist.magnitude > stepDist / 4)
+        //{
+        //    stepProgress = settleTimer = 0;
+        //    stepAnchor = pos;
+        //    settled = false;
+        //}
+    }
+
+    private void MoveFoot()
+    {
+        if (!steppingFoot)
+            return;
+
+        // number representing progress of step [0, 1]
+        stepProgress = Mathf.Clamp01(
+            stepProgress + Time.deltaTime / stepTime);
+
+        // get height of foot
+        float h = (stepProgress == 1)? 0 :
+            -Mathf.Sin(1 - stepProgress)
+            * Mathf.Log(1 - stepProgress);
+
+        // get adjecent offset
+        Vector3 adj = Vector3.Cross(Vector3.up,
+            stepRef - stepTarget)
+            * (rightStep ? 1: -1);
+        adj *= -Mathf.Sin(stepProgress)
+            * Mathf.Log(stepProgress);
+
+        // place foot
+        steppingFoot.position =
+            Vector3.Lerp(stepRef, stepTarget, stepProgress)
+            + Vector3.up * h * stepHeightMod
+            + adj * sideStepMod;
+
+        core.localPosition = Vector3.up * h / 3;
     }
 
     void FixedUpdate()
@@ -133,39 +177,75 @@ public class Walk : MonoBehaviour
         // Get input direction
         Vector3 dir = Vector3.zero;
         Vector3 right = -Vector3.Cross(forward, Vector3.up);
+
+        // Get input Vector
+        Vector3 inputDir = Vector2.zero;
         if (input["up"])
-            dir += forward;
+            inputDir.y += 1;
         if (input["down"])
-            dir -= forward;
+            inputDir.y -= 1;
         if (input["right"])
-            dir += right;
+            inputDir.x += 1;
         if (input["left"])
-            dir -= right;
-        dir = dir.normalized;
+            inputDir.x -= 1;
+
         // store input direction if it is meaningful
+        if (inputDir.magnitude > 0)
+            this.inputDir = inputDir.normalized;
+
+        dir = inputDir.y * forward + inputDir.x * right;
+        dir = dir.normalized;
+        // store movement direction if it is meaningful
         if (dir.magnitude > 0)
             this.dir = dir;
 
         // move body * apply universal friction
-        core.AddForce(dir * moveSpeed);
-        core.velocity *= 1 - friction;
+        rb.AddForce(dir * moveSpeed);
+        rb.velocity *= 1 - friction;
 
         // calculate acceleration and use it to offset nose
-        Vector3 diff = vPrev - core.velocity;
-        vPrev = core.velocity;
-        print(diff.magnitude);
-        nose.AddForce(-diff * nosePush);
+        Vector3 diff = vPrev - rb.velocity;
+        vPrev = rb.velocity;
+        //print(diff.magnitude);
+        //nose.AddForce(-diff * nosePush);
+
+        //head.localPosition = headPos + diff * nosePush;
 
         // run step logic
         Step();
+        MoveFoot();
     }
 
-    public void Rotate(Vector3 forward, float rot)
+    public void Rotate(Vector3 forward, float camRot)
     {
         this.forward = forward;
-        float r = core.rotation.eulerAngles.y;
-        r = Mathf.LerpAngle(r, rot,
-            turnLerp * core.velocity.magnitude);
-        core.rotation = Quaternion.Euler(Vector3.up * r);
+        rot = Mathf.LerpAngle(rot, camRot + Mathf.Rad2Deg *
+            Mathf.Atan2(inputDir.x, inputDir.y),
+            turnLerp * rb.velocity.magnitude);
+        rb.rotation = Quaternion.Euler(Vector3.up * rot);
+
+        // character has turned enough, needs to step
+        //if (Mathf.Abs(rot - turnAnchor) > turnStepDegs)
+        //{
+        //    print("gamer");
+        //    Vector3 pos = rb.position;
+        //    // reset reference position
+        //    stepAnchor = pos;
+
+        //    // apply hip offset
+        //    pos += rb.transform.right * footOffset *
+        //        (rightStep ? 1 : -1);
+
+        //    RaycastHit hit;
+        //    if (Physics.Raycast(pos, Vector3.down, out hit, 1000))
+        //    {
+        //        steppingFoot = rightStep ? footR : footL;
+        //        stepRef = steppingFoot.position;
+        //        stepTarget = hit.point;
+        //        stepProgress = settleTimer = 0;
+        //        turnAnchor = rot;
+        //        rightStep = !rightStep;
+        //    }
+        //}
     }
 }

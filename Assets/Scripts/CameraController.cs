@@ -48,7 +48,7 @@ public class CameraController : MonoBehaviour
         delta.y *= -mouseSensitivity.y;
 
         rot += delta;
-        rot.y = Mathf.Clamp(rot.y, -20, 70);
+        rot.y = Mathf.Clamp(rot.y, -28, 60);
         rot.x = LoopAngle(rot.x);
     }
 

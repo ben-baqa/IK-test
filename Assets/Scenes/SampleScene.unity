@@ -293,8 +293,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mouseSensitivity: {x: 1, y: 1}
   gamepadSensitivity: {x: 1, y: 1}
-  target: {fileID: 189592081916544796}
+  target: {fileID: 746529219}
   followLerp: 10
+--- !u!4 &746529219 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8105775521451898292, guid: a6dc6dff869a25340bd0c0539b503c2c, type: 3}
+  m_PrefabInstance: {fileID: 5709165183431845916}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -504,11 +509,6 @@ Transform:
   m_Father: {fileID: 732551629}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!4 &189592081916544796 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5591948472281952000, guid: a6dc6dff869a25340bd0c0539b503c2c, type: 3}
-  m_PrefabInstance: {fileID: 5709165183431845916}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5709165183431845916
 PrefabInstance:
   m_ObjectHideFlags: 0
