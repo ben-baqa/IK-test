@@ -5,21 +5,30 @@ using UnityEngine;
 public class CopyOffset : MonoBehaviour
 {
     // TODO: fix this garbage
-    public Transform target, reference;
+    public Transform target;
 
-    private Vector3 initialPosition, initialDelta;
+    private Transform parent;
 
     // Start is called before the first frame update
     void Start()
     {
-        initialPosition = transform.localPosition;
-        initialDelta = target.position - reference.position;
+        parent = new GameObject().transform;
+        parent.name = name + "Offset parent";
+        parent.parent = transform.parent;
+        parent.position = target.position;
+
+        transform.parent = parent;
     }
 
     // Update is called once per frame
-    void Update()
+    //void Update()
+    //{
+    //    Vector3 delta = target.position - reference.position;
+    //    transform.localPosition = initialPosition + delta - initialDelta;
+    //}
+
+    private void FixedUpdate()
     {
-        Vector3 delta = target.position - reference.position;
-        transform.localPosition = initialPosition + delta - initialDelta;
+        parent.position = target.position;
     }
 }

@@ -50,6 +50,11 @@ public class CameraController : MonoBehaviour
         rot += delta;
         rot.y = Mathf.Clamp(rot.y, -28, 60);
         rot.x = LoopAngle(rot.x);
+
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+            Cursor.lockState = CursorLockMode.Locked;
+        else if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            Cursor.lockState = CursorLockMode.None;
     }
 
     private float LoopAngle(float angle, float centre = 180)

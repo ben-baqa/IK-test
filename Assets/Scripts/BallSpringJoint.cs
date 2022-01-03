@@ -16,16 +16,16 @@ public class BallSpringJoint : MonoBehaviour
 
     public float linearStrength;
     public float rotationStrength;
+    public float collisionStrength;
 
 
     private Transform parent;
 
     private Vector3 prevAnchor, prevTip;
-    private Vector3 prevRot, diff;
+    private Vector3 diff, offset;
 
     private Vector3 rotation = Vector3.zero, rotationalVelocity = Vector3.zero;
     private float distance, linearVelocity;
-    private float magnitude;
 
 
     private void OnDrawGizmos()
@@ -49,6 +49,7 @@ public class BallSpringJoint : MonoBehaviour
         parent.position = anchor.position;
 
         transform.position = tip.position;
+        offset = tip.position - anchor.position;
     }
 
     // Update is called once per frame
@@ -77,7 +78,6 @@ public class BallSpringJoint : MonoBehaviour
         linearVelocity += linearDelta * linearStrength;
 
         prevAnchor = anchor.position;
-        prevRot = anchor.eulerAngles;
         prevTip = tip.position;
     }
 
@@ -103,6 +103,26 @@ public class BallSpringJoint : MonoBehaviour
         //parent.eulerAngles = anchor.eulerAngles + rotation;
         //parent.localEulerAngles = rotation;
         parent.eulerAngles = parent.parent.eulerAngles + rotation;
-        transform.position = tip.position + diff.normalized * distance;
+
+        transform.localPosition = offset + offset.normalized * distance;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        print("YEET");
+        Rigidbody rb = collision.rigidbody;
+        if (!rb)
+            return;
+
+        Vector3 v = rb.velocity * rb.mass * collisionStrength;
+        Quaternion rotationDelta = Quaternion.FromToRotation(
+            diff, diff + v);
+
+        rotationalVelocity += rotationDelta.eulerAngles;
+
+        float linearDelta = Vector3.Dot(
+            v, diff);
+
+        linearVelocity += linearDelta;;
     }
 }
