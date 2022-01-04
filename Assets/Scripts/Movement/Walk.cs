@@ -14,6 +14,7 @@ public class Walk : MonoBehaviour
     [Header("Steps")]
     public Transform footL;
     public Transform footR;
+    public StepCurves stepCurves;
     public float stepDist, footOffset,
         stepTime, settleTime,
         sideStepMod, stepHeightMod;
