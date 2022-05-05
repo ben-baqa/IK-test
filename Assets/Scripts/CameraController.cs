@@ -12,6 +12,7 @@ public class CameraController : MonoBehaviour
     private Transform horRot, vertRot;
     private Camera cam;
     private Walk walk;
+    private Run run;
     private Vector2 rot;
 
     // Start is called before the first frame update
@@ -21,6 +22,7 @@ public class CameraController : MonoBehaviour
         vertRot = horRot.GetChild(0);
         cam = GetComponentInChildren<Camera>();
         walk = FindObjectOfType<Walk>();
+        run = FindObjectOfType<Run>();
 
         Cursor.lockState = CursorLockMode.Locked;
     }
@@ -37,7 +39,7 @@ public class CameraController : MonoBehaviour
         cam.transform.LookAt(target);
 
         //update player forward vector
-        walk.Rotate(horRot.forward, rot.x);
+        walk?.Rotate(horRot.forward, rot.x);
     }
 
     // Update is called once per frame
